@@ -14,7 +14,6 @@ sun_energy = 2.0
 [resource]
 background_mode = 2
 background_sky = SubResource( 1 )
-fog_enabled = true
 fog_color = Color( 0.65098, 0.815686, 0.94902, 1 )
 fog_depth_end = 481.7
 fog_depth_curve = 0.366021

@@ -30,7 +30,7 @@ func _process(delta):
 	particles.process_material.gravity = flow_direction * 500.0
 	
 	time_since_start += delta
-	heating_amount = min(time_since_start * 0.1, 1.5)
+	heating_amount = min(time_since_start * 0.07, 1.0)
 	
 	
 	if time_since_start < 5.0:
@@ -43,12 +43,12 @@ func _process(delta):
 		closeupcam.make_current()
 		aerobubble.set_max_temp(heating_amount * 50.0)
 		
-	elif time_since_start < 16.0:
+	elif time_since_start < 18.0:
 		orbitcam.make_current()
 		aerobubble.set_max_temp(heating_amount * 5.0)
 		
 		if !cam_rotated:
-			orbitcam.rotation.y = 2.2
+			orbitcam.rotation.y = 1.8
 			cam_rotated = true
 		
 		orbitcam.rotation.y += 4.0 * delta / time_since_start
