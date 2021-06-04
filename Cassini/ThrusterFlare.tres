@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=2]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type spatial;
+render_mode unshaded, cull_disabled, blend_add;
+
+
+
+void fragment() {
+	float fresnel = dot(NORMAL, VIEW);
+	float glow = pow(COLOR.r, 4.0) * fresnel;
+	ALBEDO = vec3(glow * 50.0);
+}"
+
+[resource]
+shader = SubResource( 1 )

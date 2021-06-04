@@ -1,0 +1,101 @@
+[gd_resource type="ShaderMaterial" load_steps=5 format=2]
+
+[ext_resource path="res://Cassini/HeatFalloff.png" type="Texture" id=1]
+[ext_resource path="res://Cassini/HeatVolume.png" type="Texture" id=2]
+[ext_resource path="res://Cassini/AeroNoise.png" type="Texture" id=3]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type spatial;
+render_mode unshaded, cull_disabled, blend_add;
+
+/// This texture defines how the atmospheric plasma \"glow\" heats up in
+/// the direction of travel.
+uniform sampler2D heat_falloff_tex;
+
+/// This texture fakes a \"shell\" of volume by providing higher brightness
+/// at the edges of the object
+uniform sampler2D volume_falloff_tex;
+
+
+uniform sampler2D streak_tex;
+
+uniform float heating_amount;
+
+
+/// The direction that the spacecraft is travelling. Used to compute where to put the
+/// plasma \"glow\"
+uniform vec3 flow_direction = vec3(1.0, 0.0, 0.0);
+
+uniform vec4 color: hint_color;
+
+uniform float time = 0.0;
+uniform float texture_scale = 0.2;
+
+uniform float max_temp = 1.0;
+
+
+varying highp vec3 flowmap;
+
+
+void vertex() {
+	
+	vec3 dir = normalize(flow_direction);
+	float heating = dot(NORMAL, dir);
+	COLOR.r = (heating * 0.5 + 0.5) / heating_amount;
+	
+	// Stretch the aerodynamic bubble to provide a bit of a trail
+	VERTEX = VERTEX + flow_direction * 80.0 * max(heating - 0.5, 0.0) * heating_amount;
+	
+	// Compute a texture mapping matrix. This matrix has one of it's
+	// axis aligned with the flow direction. The others are relatively arbitrary
+	vec3 t1 = dir;
+	vec3 t2 = cross(t1, vec3(0.0, 0.0, 1.0));
+	vec3 t3 = cross(t1, t2);
+	mat3 m1 = mat3(t1, t2, t3);
+	
+	/// Use the mapping matrix to figure out which way gasses will flow
+	flowmap = -(m1 * NORMAL) * 0.5 + 0.5;
+	
+	// Use the mapping matrix to construct some texture coordinates
+	UV = (m1 * VERTEX.rgb).gb * texture_scale;
+	
+
+	
+	
+}
+
+void fragment() {
+	
+	// Fake volumetrics
+	float raw_frensel = pow(dot(NORMAL, VIEW), 2.0);
+	float frensel = pow(texture(volume_falloff_tex, vec2(raw_frensel)).r, 2.0) * 1.0;
+	
+	// Figure out where the heat will be
+	float heat_falloff = pow(texture(heat_falloff_tex, vec2(COLOR.r)).r, 2.0);
+	
+	// Flowmap animation of streaks
+	float t1 = fract(time) - 0.5;
+	float t2 = fract(time + 0.5) - 0.5;
+	float tmix = abs(fract(time) - 0.5) * 2.0;
+	vec3 flowdata = (flowmap.rgb * 2.0 - 1.0);
+	vec2 flow = flowdata.gb * flowdata.r;
+	float streaks1 = texture(streak_tex, vec2(UV + flow * t1 - time * 0.1)).r;
+	float streaks2 = texture(streak_tex, vec2(UV + flow * t2 - time * 0.1)).r;
+	float streaks = mix(streaks1, streaks2, tmix);
+	streaks = pow(streaks * heat_falloff + pow(heat_falloff, 2.0), 2.0) * 100.0;
+
+	float out_val = frensel * clamp(streaks, 0.0, max_temp);
+	ALBEDO = (out_val * color.rgb + out_val ) * heating_amount;
+}"
+
+[resource]
+shader = SubResource( 1 )
+shader_param/heating_amount = 1.157
+shader_param/flow_direction = Vector3( -0.9, 0.2, 0 )
+shader_param/color = Color( 0.941176, 0.631373, 0.0431373, 1 )
+shader_param/time = 17.362
+shader_param/texture_scale = 0.2
+shader_param/max_temp = 1.0
+shader_param/heat_falloff_tex = ExtResource( 1 )
+shader_param/volume_falloff_tex = ExtResource( 2 )
+shader_param/streak_tex = ExtResource( 3 )
