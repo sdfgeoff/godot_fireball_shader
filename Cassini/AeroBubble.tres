@@ -16,9 +16,12 @@ uniform sampler2D heat_falloff_tex;
 /// at the edges of the object
 uniform sampler2D volume_falloff_tex;
 
-
+/// Texture used on streaks
 uniform sampler2D streak_tex;
+/// Scale of the streak_tex
+uniform float texture_scale = 0.2;
 
+/// How intense the heating is
 uniform float heating_amount;
 
 
@@ -26,24 +29,27 @@ uniform float heating_amount;
 /// plasma \"glow\"
 uniform vec3 flow_direction = vec3(1.0, 0.0, 0.0);
 
+/// Tint the flame
 uniform vec4 color: hint_color;
 
+/// Animate the effect
 uniform float time = 0.0;
-uniform float texture_scale = 0.2;
 
+/// Clamp the brightness of the output. This is useful for controlling bloom etc.
 uniform float max_temp = 1.0;
+
 
 
 varying highp vec3 flowmap;
 
 
 void vertex() {
-	
+	/// Compute where to apply heating based on travel direction and surface normals
 	vec3 dir = normalize(flow_direction);
 	float heating = dot(NORMAL, dir);
 	COLOR.r = (heating * 0.5 + 0.5) / heating_amount;
 	
-	// Stretch the aerodynamic bubble to provide a bit of a trail
+	// Stretch the aerodynamic bubble to provide a trail
 	VERTEX = VERTEX + flow_direction * 80.0 * max(heating - 0.5, 0.0) * heating_amount;
 	
 	// Compute a texture mapping matrix. This matrix has one of it's
@@ -58,10 +64,6 @@ void vertex() {
 	
 	// Use the mapping matrix to construct some texture coordinates
 	UV = (m1 * VERTEX.rgb).gb * texture_scale;
-	
-
-	
-	
 }
 
 void fragment() {
@@ -90,11 +92,11 @@ void fragment() {
 
 [resource]
 shader = SubResource( 1 )
+shader_param/texture_scale = 0.2
 shader_param/heating_amount = 1.157
 shader_param/flow_direction = Vector3( -0.9, 0.2, 0 )
 shader_param/color = Color( 0.941176, 0.631373, 0.0431373, 1 )
 shader_param/time = 17.362
-shader_param/texture_scale = 0.2
 shader_param/max_temp = 1.0
 shader_param/heat_falloff_tex = ExtResource( 1 )
 shader_param/volume_falloff_tex = ExtResource( 2 )

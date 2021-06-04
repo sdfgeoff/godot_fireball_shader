@@ -1,9 +1,6 @@
 extends Spatial
+""" Makes child objects appear/dissappear to simulate firing thrusters """
 
-
-# Declare member variables here. Examples:
-# var a = 2
-# var b = "text"
 export var thruster_material: Material;
 export var fire_probability: float = 0.02;
 
